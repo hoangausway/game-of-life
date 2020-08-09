@@ -1,0 +1,9 @@
+<<<<<<< HEAD
+MASTER:
+- GOLControlePanel is implemented with useReducer
+ Check branch statestream for implementation with streams.
+=======
+BRANCH:
+- GOLControlePanel is implemented with streams
+while the master implements it with useReducer.
+>>>>>>> golcom
