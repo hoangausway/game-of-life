@@ -1,68 +1,110 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# The Conway's Game Of Life using React and RxJS - `<game-of-life>`
 
-## Available Scripts
+## Subjects
 
-In the project directory, you can run:
+- React, RxJS
+- Build Conway's Game Of Life  with React and RxJS
 
-### `npm start`
+## To show
+- Taste Functional Reactive Programming (RxJS) with React
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+For the `web component` version please see:
+- [The Conway's Game Of Life using Atomico and RxJS - <game-of-life>](https://github.com/hoangausway/atomico-game-of-life)
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
 
-### `npm test`
+## Source - Build - Run
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- The project structure is based on the **create-react-app**.
+- Commands to install, build, watch and run:
 
-### `npm run build`
+```bash
+npm install # install dependencies
+npm start # build and watch for code changes and open the localserver: 3000
+```
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Component's logics
+**`game-of-life`**
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+**Quick description**
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- Grid of "alive" and "dead" cells
+- In each iteration of the game (a "tick"), cells become dead or alive based on the previous state of the neighbourhood:
+  - **underpopulation:** any live cell with < 2 live neighbours dies
+  - **overpopulation:** any live cell with > 3 live neighbours dies
+  - **reproduction:** any dead cell with exactly 3 live neighbours becomes a live cell
 
-### `npm run eject`
+**Links**
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+The description of Conway's Game Of Life: [https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life]
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+A good source introducing Reactive Programming/RxJs/Game Of Life: [https://docs.google.com/presentation/d/e/2PACX-1vQ06TaoEe3o9Xu7FluNigjqaKwXreoPj4xYgZ-ZCAw4cXlMSPpEqAH0re11eP2_uzw7N_hpEZ33gWsG/pub?start=false&loop=false&delayms=3000&slide=id.g34fa86e976_0_0]
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## Takeaways
+**How RxJS works with React**
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+**Engage DOM event with RxJS stream using React's useMemo/useCallback**
+```bash
+/src/components/game-of-life/useEventStream.js
 
-## Learn More
+import { useMemo, useCallback } from 'react'
+import { Subject } from 'rxjs'
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+export const useEventStream = () => {
+  const eventStream$ = useMemo(() => new Subject(), [])
+  const eventEmit = useCallback(e => eventStream$.next(e), [])
+  return [eventEmit, eventStream$]
+}
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Usage of useEventStream:
 
-### Code Splitting
+```bash
+/src/components/game-of-life/useEventOfLife.js
+import { useEventStream } from './useEventStream'
+import { map } from 'rxjs/operators'
+...
+# define event streams and related triggers
+const [toggleEmit, toggleEvent$] = useEventStream()
+const [activeEmit, activeEvent$] = useEventStream()
+const [resetEmit, resetEvent$] = useEventStream()
+...
+# manipulating pauseEvent$ stream
+const active$ = activeEvent$.pipe(
+  map(e => ({ ...e, world_event_type: WorldEventTypes.ACTIVATE }))
+)
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+...
+```
+**Emit stream within useEffect**
+```bash
+/src/components/game-of-life/game-of-life.js
+import { useEffect } from 'react'
+...
+# emits `active_toggle` event using `activeEmit`
+useEffect(
+  () => {
+    activeEmit(new window.CustomEvent('active_toggle'))
+  },
+  [active]
+)
+```
+**Subscribe/unsubscribe stream within useEffect**
+```bash
+/src/components/game-of-life/useEventOfLife.js
+import { useEffect } from 'react'
+...
+useEffect(() => {
+  ...
+  const activeSub = activeStream$.subscribe(activeObserver)
+  return () => {
+    ...
+    activeSub.unsubscribe()
+  }
+}, [])
+```
 
-### Analyzing the Bundle Size
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+## What's next
+Improve `<game-of-life>` from some aspects.  It's nice to add a "control panel", which allows user to change  tick's duration, to apply initial world pattern from predefined list of famous patterns.
 
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+Or, we could accumulate some interesting statistic data (for example, max/min number of life cells).

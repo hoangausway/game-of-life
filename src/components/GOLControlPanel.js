@@ -68,7 +68,14 @@ const GOLControlPanel = ({ resetEmit, pauseEmit, patterns, options }) => {
           onChange={patternNameEmit}
           onKeyUp={patterNameKeyUpEmit}
         />
-        <div style={{ width: '600px', height: '28px', overflow: 'scroll', backgroundColor: 'palegreen' }}>
+        <div
+          style={{
+            width: '600px',
+            height: '28px',
+            overflow: 'scroll',
+            backgroundColor: 'palegreen'
+          }}
+        >
           {state.selectionNames}
         </div>
       </section>
